@@ -1,11 +1,23 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+# Ubuntu 16.04 (xenial)
+# https://gitlab.com/nvidia/cuda/blob/ubuntu16.04/9.1/devel/cudnn7/Dockerfile
+
+
 FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
 
 MAINTAINER Samir Jabari <samir.jabari@fau.de>
 
 USER root
+RUN apt-get update
+RUN apt-get dist-upgrade -y
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install python-software-properties
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install software-properties-common
+
+
+RUN add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update
 
 # Install all OS dependencies for notebook server that starts but lacks all
 # features (e.g., download as all possible file formats)
@@ -18,12 +30,20 @@ RUN apt-get update && apt-get -yq dist-upgrade \
     sudo \
     locales \
     fonts-liberation \
-    python3-pip \
+    python3.6 \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
 RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
     locale-gen
+
+RUN apt-get update
+RUN apt-get install curl
+
+RUN curl https://bootstrap.pypa.io/get-pip.py | python3.6
+
+RUN ln -sf /usr/bin/python3.6 /usr/local/bin/python3 &&\
+    ln -sf /usr/local/bin/pip /usr/local/bin/pip3
 
 # Install Tini
 RUN wget --quiet https://github.com/krallin/tini/releases/download/v0.10.0/tini && \
@@ -62,7 +82,7 @@ RUN mkdir /home/$NB_USER/work && \
 ENV MINICONDA_VERSION latest
 RUN cd /tmp && \
     wget --quiet https://repo.continuum.io/miniconda/Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh && \
-    echo "7fe70b214bee1143e3e3f0467b71453c *Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh" | md5sum -c - && \
+    echo "a946ea1d0c4a642ddf0c3a26a18bb16d *Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh" | md5sum -c - && \
     /bin/bash Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh -f -b -p $CONDA_DIR && \
     rm Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh && \
     $CONDA_DIR/bin/conda config --system --prepend channels conda-forge && \
@@ -72,16 +92,15 @@ RUN cd /tmp && \
     conda clean -tipsy && \
     fix-permissions $CONDA_DIR
 
-RUN conda install -y python=3.5 && \
-  fix-permissions $CONDA_DIR
 
-# Install Jupyter Notebook and Hub
-RUN conda install --quiet --yes \
-    'notebook=5.2.*' \
-    'jupyterhub=0.8.*' \
-    'jupyterlab=0.31.*' \
-    && conda clean -tipsy && \
+# Install Python, Jupyter Notebook and Hub
+RUN conda install -y \
+    'python=3.6'  \
+    'notebook=5.6.*' \
+    'jupyterhub=0.9.*' \
+    'jupyterlab' &&\
     fix-permissions $CONDA_DIR
+
 
 USER root
 

@@ -90,6 +90,8 @@ c.JupyterHub.db_url='postgresql://postgres:{password}@{host}/{db}'.format(
     db = os.environ['POSTGRES_DB'],
 )
 
+# Make it possible to add users via the admin panel
+c.LocalAuthenticator.create_system_users = True
 # Whitlelist users and admins with real usernames
 c.Authenticator.whitelist={'admin', 'user'}
 c.Authenticator.admin_users={'admin'}

@@ -20,9 +20,8 @@ RUN chmod 700 /srv/jupyterhub/secrets && \
 
 COPY ./userlist /srv/jupyterhub/userlist
 
-RUN useradd -m samir &&\
-    echo 'samir:pttm4all7' | chpasswd &&\
-    chown samir /home/samir &&\
-    useradd -m deep_learner &&\
-    echo 'deep_learner:Anatomie1234'| chpasswd &&\
-    chown deep_learner /home/deep_learner
+## I have added users in the following but there is a better way?!
+RUN useradd -m administrator &&\
+    echo 'administrator:password' | chpasswd &&\
+    chown administrator /home/administrator &&\
+    ### and so on

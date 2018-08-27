@@ -1,5 +1,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+
 FROM base-notebook-gpu
 
 MAINTAINER Samir Jabari <samir.jabari@fau.de>
@@ -7,6 +8,20 @@ MAINTAINER Samir Jabari <samir.jabari@fau.de>
 #MAINTAINER Jupyter Project <jupyter@googlegroups.com>
 
 USER root
+RUN apt-get update
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install python-software-properties
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install software-properties-common
+RUN add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.6
+
+RUN curl https://bootstrap.pypa.io/get-pip.py | python3.6
+
+RUN python3.6 -m pip install --upgrade pip
+
+RUN ln -sf /usr/bin/python3.6 /usr/local/bin/python3 &&\
+    ln -sf /usr/local/bin/pip /usr/local/bin/pip3
 
 # Install all OS dependencies for fully functional notebook server
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -21,9 +36,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libzmq3-dev \
     pkg-config \
     unzip \
-    python3 \
-    python3-pip \
-    python3-setuptools \
     rsync \
     software-properties-common \
     inkscape \
@@ -70,14 +82,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxine2-dev \
     libtbb-dev \
     libeigen3-dev \
-    python3-dev \
-    python3-tk \
     ant \
     default-jdk \
     doxygen \
       && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     bc \
@@ -87,6 +99,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && apt-get install -y \
+    python3-dev \
+    python3-tk \
+    python3-setuptools \
     python3-numpy \
     python3-scipy \
     python3-nose \
@@ -109,63 +124,60 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 
-RUN pip3 install --upgrade pip
-
-
-RUN pip3 --no-cache-dir install --upgrade ipython \
+RUN conda install --yes\
     Pillow \
     h5py \
     ipykernel \
     jupyter \
-    matplotlib==2.0.2 \
+    matplotlib \
     seaborn \
     numpy \
     pandas \
     scipy \
-    sklearn \
     bcolz \
     Cython \
     path.py \
     six \
     sphinx \
     wheel \
-    zmq \
     pygments \
     Flask \
+    scikit-image \
+    pandas \
+    tqdm \
     statsmodels \
-    && \
-python3 -m ipykernel.kernelspec
-
-
-
-RUN conda install -c aaronzs tensorflow  && \
-  fix-permissions $CONDA_DIR
-RUN conda install -c aaronzs tensorflow-gpu && \
-  fix-permissions $CONDA_DIR
-
-RUN conda install -c anaconda keras && \
-  fix-permissions $CONDA_DIR
-
-
-# install pytorch
-RUN conda install pytorch torchvision  cuda90 -c pytorch && \
-    conda clean -tipsy && \
+    pydicom \
+    tensorboardX \
+    tensorflow-tensorboard \
+    plotly \
+    seaborn \
+    ipython && \
     fix-permissions $CONDA_DIR
 
+RUN conda install -y \
+    scikit-learn
 
-# Install OpenSlide
+RUN python3.6 -m pip install --upgrade --force-reinstall --no-cache-dir --ignore-installed  \
+    zmq \
+    imgaug \
+    kaggle \
+    pretrainedmodels \
+    skorch
+
+
+
+# Installing OpenSlide
 RUN apt-get update && apt-get install -y openslide-tools
-#RUN pip install --upgrade pip && pip install openslide-python
 RUN apt-get update && apt-get install -y python3-openslide &&\
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Installing OpenCV
 RUN conda install -c conda-forge opencv  && \
     fix-permissions $CONDA_DIR
-RUN  conda install -c conda-forge/label/broken opencv && \
-    fix-permissions $CONDA_DIR
 
 
+# Installing Libvips
 RUN apt update && apt install -y libvips libvips-dev libvips-tools libopenslide-dev
 
 ENV CUDA_HOME /usr/local/cuda-9.0
@@ -182,10 +194,32 @@ RUN cd /tmp && \
     fix-permissions $CONDA_DIR
 
 
+
+RUN conda install -y \
+    tensorboard
+
+# Installig Tensorflow/GPU
+RUN conda install -c aaronzs tensorflow  && \
+  fix-permissions $CONDA_DIR
+
+RUN conda install -c aaronzs tensorflow-gpu && \
+  fix-permissions $CONDA_DIR
+
+# Installing Keras
+RUN conda install -c anaconda keras && \
+  fix-permissions $CONDA_DIR
+
+# Installing pytorch
+RUN conda install pytorch torchvision  cuda90 -c pytorch && \
+    conda clean -tipsy && \
+    fix-permissions $CONDA_DIR
+
+
 RUN conda install --yes \
-    'matplotlib=2.0.*' \
+    'matplotlib' \
     'jupyter' \
-    'numpy=1.14.*' &&\
+    'numpy' \
+    'scikit-image' &&\
   fix-permissions /home/$NB_USER
 
 # Import matplotlib the first time to build the font cache.
@@ -193,17 +227,19 @@ ENV XDG_CACHE_HOME /home/$NB_USER/.cache/
 RUN MPLBACKEND=Agg python -c "import matplotlib.pyplot" && \
     fix-permissions /home/$NB_USER
 
-# -->jupyter-tensorboard does not work yet 
-# RUN pip3 install --pre jupyter-tensorboard &&\
-#     fix-permissions /home/$NB_USER
+
+RUN python3.6 -m pip install --upgrade --force-reinstall --no-cache-dir --ignore-installed  --pre \
+    jupyter-tensorboard &&\
+    fix-permissions /home/$NB_USER
 
 
 EXPOSE 5000 6006
+
 USER $NB_USER
 
 
 # cleanup
-RUN apt-get autoremove -y && \
-    apt-get autoclean && \
-    apt-get clean && \
-rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+ #RUN 	apt-get autoremove -y && \
+  # apt-get autoclean && \
+  # apt-get clean && \
+ #rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
