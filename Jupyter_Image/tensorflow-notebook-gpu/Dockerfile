@@ -1,17 +1,29 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-FROM base-notebook-gpu
+FROM digitalanatomist/mybase
 
 MAINTAINER Samir Jabari <samir.jabari@fau.de>
 #MAINTAINER aburnap@mit.edu
 #MAINTAINER Jupyter Project <jupyter@googlegroups.com>
 
+#ENV CUDA_HOME /usr/local/cuda-9.2
+#ENV LD_LIBRARY_PATH /usr/local/cuda-9.2:/usr/local/cuda-9.2/lib64:$LD_LIBRARY_PATH
+#ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:$LD_LIBRARY_PATH
+#ENV LIBRARY_PATH $LD_LIBRARY_PATH
+
+# For CUDA profiling, TensorFlow requires CUPTI.
+ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:$LD_LIBRARY_PATH
+ENV CUDA_HOME=/usr/local/cuda
+ENV CUDA_ROOT=$CUDA_HOME
+ENV PATH=$PATH:$CUDA_ROOT/bin:$HOME/bin
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_ROOT/lib64
+
 USER root
 RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install python-software-properties
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install software-properties-common
-RUN add-apt-repository ppa:deadsnakes/ppa && \
+RUN add-apt-repository ppa:fkrull/deadsnakes && \
     apt-get update
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.6
@@ -85,20 +97,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ant \
     default-jdk \
     doxygen \
-      && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
     bc \
     cmake \
-    && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update && apt-get install -y \
+    python-dev \
+    python-tk \
+    python-setuptools \
+    python-numpy \
+    python-scipy \
+    python-nose \
+    python-h5py \
+    python-skimage \
+    python-matplotlib \
+    python-pandas \
+    python-sklearn \
+    python-sympy \
     python3-dev \
     python3-tk \
     python3-setuptools \
@@ -111,28 +123,54 @@ RUN apt-get update && apt-get install -y \
     python3-pandas \
     python3-sklearn \
     python3-sympy \
-    && \
-  apt-get clean && \
-  apt-get autoremove && \
-rm -rf /var/lib/apt/lists/*
-
-
-# libav-tools for matplotlib anim
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends libav-tools && \
+    libav-tools \
+     && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 
-RUN conda install --yes\
+# Installing OpenSlide
+RUN apt-get update && apt-get install -y openslide-tools
+RUN apt-get update && apt-get install -y python3-openslide &&\
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+
+# Installing Libvips
+RUN apt update && apt install -y libvips libvips-dev libvips-tools libopenslide-dev
+
+
+COPY requirements.txt /opt/conda/envs/requirements/
+
+RUN /opt/conda/envs/deep_learning_python3/bin/python -m pip install  \
+    scikit-image \
+    pandas \
+    tqdm \
+    imgaug \
+    kaggle \
+    pydicom \
+    tensorboardX \
+    tensorflow-tensorboard \
+    sklearn \
+    plotly \
+    pretrainedmodels \
+    seaborn \
+    keras \
+    skorch \
+    ignite  \
+    graphviz \
+    sklearn_pandas \
+    isoweek \
+    pandas_summary \
+    spacy\
+    pypng \
+    torchtext \
     Pillow \
     h5py \
     ipykernel \
     jupyter \
     matplotlib \
-    seaborn \
     numpy \
-    pandas \
     scipy \
     bcolz \
     Cython \
@@ -142,101 +180,127 @@ RUN conda install --yes\
     wheel \
     pygments \
     Flask \
+    statsmodels \
+    ipython \
+    scikit-learn \
+    zmq \
+    openslide-python \
+    jupyter-tensorboard &&\
+    fix-permissions $CONDA_DIR &&\
+    fix-permissions /home/$NB_USER
+
+RUN /opt/conda/envs/deep_learning_python2/bin/python -m pip install  \
     scikit-image \
     pandas \
     tqdm \
-    statsmodels \
+    imgaug \
+    kaggle \
     pydicom \
     tensorboardX \
     tensorflow-tensorboard \
+    sklearn \
     plotly \
-    seaborn \
-    ipython && \
-    fix-permissions $CONDA_DIR
-
-RUN conda install -y \
-    scikit-learn
-
-RUN python3.6 -m pip install --upgrade --force-reinstall --no-cache-dir --ignore-installed  \
-    zmq \
-    imgaug \
-    kaggle \
     pretrainedmodels \
-    skorch
-
-
-
-# Installing OpenSlide
-RUN apt-get update && apt-get install -y openslide-tools
-RUN apt-get update && apt-get install -y python3-openslide &&\
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Installing OpenCV
-RUN conda install -c conda-forge opencv  && \
-    fix-permissions $CONDA_DIR
-
-
-# Installing Libvips
-RUN apt update && apt install -y libvips libvips-dev libvips-tools libopenslide-dev
-
-ENV CUDA_HOME /usr/local/cuda-9.0
-ENV LD_LIBRARY_PATH /usr/local/cuda-9.0:/usr/local/cuda-9.0/lib64:$LD_LIBRARY_PATH
-ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:$LD_LIBRARY_PATH
-ENV LIBRARY_PATH $LD_LIBRARY_PATH
-
-# Install facets which does not have a pip or conda package at the moment
-RUN cd /tmp && \
-    git clone https://github.com/PAIR-code/facets.git && \
-    cd facets && \
-    jupyter nbextension install facets-dist/ --sys-prefix && \
-    rm -rf facets && \
-    fix-permissions $CONDA_DIR
-
-
-
-RUN conda install -y \
-    tensorboard
-
-# Installig Tensorflow/GPU
-RUN conda install -c aaronzs tensorflow  && \
-  fix-permissions $CONDA_DIR
-
-RUN conda install -c aaronzs tensorflow-gpu && \
-  fix-permissions $CONDA_DIR
-
-# Installing Keras
-RUN conda install -c anaconda keras && \
-  fix-permissions $CONDA_DIR
-
-# Installing pytorch
-RUN conda install pytorch torchvision  cuda90 -c pytorch && \
-    conda clean -tipsy && \
-    fix-permissions $CONDA_DIR
-
-
-RUN conda install --yes \
-    'matplotlib' \
-    'jupyter' \
-    'numpy' \
-    'scikit-image' &&\
-  fix-permissions /home/$NB_USER
-
-# Import matplotlib the first time to build the font cache.
-ENV XDG_CACHE_HOME /home/$NB_USER/.cache/
-RUN MPLBACKEND=Agg python -c "import matplotlib.pyplot" && \
+    seaborn \
+    keras \
+    skorch \
+    ignite  \
+    graphviz \
+    sklearn_pandas \
+    isoweek \
+    pandas_summary \
+    spacy\
+    pypng \
+    torchtext \
+    Pillow \
+    h5py \
+    ipykernel \
+    jupyter \
+    matplotlib \
+    numpy \
+    scipy \
+    bcolz \
+    Cython \
+    path.py \
+    six \
+    sphinx \
+    wheel \
+    pygments \
+    Flask \
+    statsmodels \
+    ipython \
+    scikit-learn \
+    zmq \
+    openslide-python \
+    jupyter-tensorboard &&\
+    fix-permissions $CONDA_DIR &&\
     fix-permissions /home/$NB_USER
 
+# Installing OpenCV TensorFlow Kerasand Pytorch into the environments
+RUN conda install -n deep_learning_python2 -y  \
+    opencv \
+    tensorboard \
+    tensorflow-gpu=1.12.0 \
+    keras \
+    pytorch torchvision  cuda92 -c pytorch &&\
+    fix-permissions $CONDA_DIR &&\
+    fix-permissions /home/$NB_USER
+
+RUN conda install -n deep_learning_python3   \
+      opencv \
+      tensorboard \
+      tensorflow-gpu=1.12.0 \
+      keras \
+      pytorch torchvision  cuda92 -c pytorch &&\
+      fix-permissions $CONDA_DIR &&\
+      fix-permissions /home/$NB_USER
+
+RUN conda install --yes \
+    'tensorflow-gpu==1.11.0' &&\
+    fix-permissions $CONDA_DIR &&\
+    fix-permissions /home/$NB_USER
+
+# Import matplotlib the first time to build the font cache.
+#ENV XDG_CACHE_HOME /home/$NB_USER/.cache/
+#RUN MPLBACKEND=Agg python -c "import matplotlib.pyplot" && \
+    #fix-permissions /home/$NB_USER
+
+# Install facets which does not have a pip or conda package at the moment
+#RUN cd /tmp && \
+#    git clone https://github.com/PAIR-code/facets.git && \
+#    cd facets && \
+#    /opt/conda/envs/deep_learning_python2/bin/ jupyter nbextension install facets-dist/ --sys-prefix && \
+#    /opt/conda/envs/deep_learning_python3/bin/ jupyter nbextension install facets-dist/ --sys-prefix && \
+#    rm -rf facets && \
+#    fix-permissions $CONDA_DIR &&\
+#    fix-permissions /home/$NB_USER
 
 RUN python3.6 -m pip install --upgrade --force-reinstall --no-cache-dir --ignore-installed  --pre \
     jupyter-tensorboard &&\
+    fix-permissions $CONDA_DIR &&\
     fix-permissions /home/$NB_USER
 
 
 EXPOSE 5000 6006
 
-USER $NB_USER
+USER root
 
+# Autodetects jupyterhub and standalone modes
+#COPY jupyter_notebook_config.py /root/.jupyter/
+#COPY run_jupyter.sh /usr/local/bin/
+
+#RUN chmod +x /usr/local/bin/run_jupyter.sh
+
+#CMD ["/usr/local/bin/run_jupyter.sh", "--allow-root"]
+
+
+USER $NB_USER
+CMD ["start-notebook.sh"]
+
+COPY start-notebook.sh /usr/local/bin/
+
+
+#USER $NB_USER
 
 # cleanup
  #RUN 	apt-get autoremove -y && \
