@@ -5,15 +5,17 @@
 # https://gitlab.com/nvidia/cuda/blob/ubuntu16.04/9.1/devel/cudnn7/Dockerfile
 
 
-FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
+FROM nvidia/cuda:9.2-cudnn7-runtime-ubuntu16.04
+
 
 MAINTAINER Samir Jabari <samir.jabari@fau.de>
 
 USER root
 RUN apt-get update
 RUN apt-get dist-upgrade -y
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install python-software-properties
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install software-properties-common
+RUN apt-get update
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install python-software-properties --fix-missing
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install software-properties-common --fix-missing
 
 
 RUN add-apt-repository ppa:deadsnakes/ppa && \
@@ -82,7 +84,7 @@ RUN mkdir /home/$NB_USER/work && \
 ENV MINICONDA_VERSION latest
 RUN cd /tmp && \
     wget --quiet https://repo.continuum.io/miniconda/Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh && \
-    echo "a946ea1d0c4a642ddf0c3a26a18bb16d *Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh" | md5sum -c - && \
+    #echo "a946ea1d0c4a642ddf0c3a26a18bb16d *Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh" | md5sum -c - && \
     /bin/bash Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh -f -b -p $CONDA_DIR && \
     rm Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh && \
     $CONDA_DIR/bin/conda config --system --prepend channels conda-forge && \
@@ -96,10 +98,28 @@ RUN cd /tmp && \
 # Install Python, Jupyter Notebook and Hub
 RUN conda install -y \
     'python=3.6'  \
-    'notebook=5.6.*' \
-    'jupyterhub=0.9.*' \
+    'notebook=5.7.2' \
+    'jupyterhub=0.9.4' \
+    'jupyterlab=0.35.4' &&\
+    fix-permissions $CONDA_DIR
+
+RUN conda create -n deep_learning_python3 \
+    'python=3.6' \
+    'notebook=5.7.2' \
+    'jupyterlab=0.35.4' &&\
+    fix-permissions $CONDA_DIR
+
+
+RUN /opt/conda/envs/deep_learning_python3/bin/python -m ipykernel install --user --name deep_learning_python3 --display-name 'Deep Learning Python 3'
+
+RUN conda create -n deep_learning_python2 \
+    'python=2.7' \
+    'notebook' \
     'jupyterlab' &&\
     fix-permissions $CONDA_DIR
+
+
+RUN /opt/conda/envs/deep_learning_python2/bin/python -m ipykernel install --user --name deep_learning_python2 --display-name 'Deep Learning Python 2'
 
 
 USER root
