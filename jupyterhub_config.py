@@ -48,7 +48,7 @@ c.DockerSpawner.extra_host_config = {
 # it.  Most jupyter/docker-stacks *-notebook images run the Notebook server as
 # user `jovyan`, and set the notebook directory to `/home/jovyan/work`.
 # We follow the same convention.
-notebook_dir= os.environ.get('DOCKER_NOTEBOOK_DIR') or '/home/jovyan/work'
+notebook_dir= os.environ.get('DOCKER_NOTEBOOK_DIR') or '/home/Deep_Learner/work/local'
 c.DockerSpawner.notebook_dir= notebook_dir
 
 # Mount the real user's Docker volume on the host to the notebook user's
@@ -56,7 +56,10 @@ c.DockerSpawner.notebook_dir= notebook_dir
 
 c.DockerSpawner.volumes= {
     #'nvidia_driver_387.34':'/usr/local/nvidia', # not needed for nvidia-docker version 2
-    'jupyterhub-user-{username}': notebook_dir
+    'jupyterhub-user-{username}': notebook_dir,
+    # i mapped some network shares into here
+    'share/{username}: /home/Deep_Learner/work/network,
+    'share/shared:/ home/Deep_Learner/share'
 }
 
 # Remove containers once they are stopped
