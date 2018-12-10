@@ -4,7 +4,7 @@ They will be spwaned from a Jupyterhub which is defined in the Dockerfile.jupyte
 For more details visit our website https://www.dlm.med.fau.de/setting-jupyterhub-deep-learning/
 
 Just in short some features:
--Jupyterhub Image definition wit DockerSpawner for spawning Jupyternotebooks.
+-Jupyterhub Image definition with DockerSpawner for spawning Jupyternotebooks.
    - Data is persisted:
      --> -locally (Docker-Volume --> cookie secrets) 
          
@@ -22,6 +22,7 @@ Just in short some features:
        Notebook:
          The workhorses are (DeepLearning)Python3, (DeepLearning)Python2:
          They include (and many others--> see Dockerfiles)
+           
            Tensorflow-GPU 1.12 and
            Pytorch-GPU 1.0.0
        
