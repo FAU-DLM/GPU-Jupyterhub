@@ -297,7 +297,7 @@ USER root
 USER $NB_USER
 CMD ["start-notebook.sh"]
 
-COPY start-notebook.sh /usr/local/bin/
+#COPY start-notebook.sh /usr/local/bin/
 
 
 #USER $NB_USER

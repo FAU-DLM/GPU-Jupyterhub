@@ -74,7 +74,7 @@ USER $NB_USER
 
 CMD ["start-notebook.sh", "--allow-root"]
 
-COPY start-notebook.sh /usr/local/bin
+#COPY start-notebook.sh /usr/local/bin
 
 
 # Clone the source git repo into notebooks (keep this at the end of the file)
