@@ -3,8 +3,7 @@
 
 # Ubuntu 18.04
 
-
-FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04
+FROM nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04
 
 
 MAINTAINER Samir Jabari <samir.jabari@fau.de>
@@ -29,7 +28,7 @@ RUN apt-get update && apt-get -yq dist-upgrade \
     sudo \
     locales \
     fonts-liberation \
-    python3.6 \
+    python3.7 \
     curl \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
@@ -85,42 +84,58 @@ RUN cd /tmp && \
     fix-permissions $CONDA_DIR
 
 
+
 # Install Python, Jupyter Notebook and Hub
 RUN conda install -y \
-    'python=3.6'  \
-    'notebook=5.7.2' \
-    'jupyterhub=0.9.4' \
-    'jupyterlab=0.35.4' \
+    'notebook' \
+    'jupyterhub' \
     'jupyter' \
-    'six'  &&\
+    'six' \
+     &&\
     fix-permissions $CONDA_DIR
 
-RUN conda create -n deep_learning_python3 \
-    'python=3.6' \
-    'notebook=5.7.2' \
-    'jupyterlab=0.35.4' &&\
-    fix-permissions $CONDA_DIR
+# R-kernel
+RUN conda create  -n r-kernel \
+     -c r r-irkernel \
+        &&\
+        fix-permissions $CONDA_DIR
 
+ADD docker/environment-r.yml .setup/
+RUN conda env update -n r-kernel -q -f .setup/environment-r.yml && \
+    /opt/conda/envs/r-kernel/bin/Rscript -e "IRkernel::installspec(displayname='R')" \
+    &&\
+    fix-permissions $CONDA_DIR
+USER root
+RUN apt-get update && apt-get upgrade
+RUN apt-get install -y -q \
+    libxrender1 \
+    libsm6
+USER $NB_USER
+#RUN /opt/conda/envs/r-kernel/bin/pip install ipykernel --user --name deep_learning_python2 --display-name 'R'
 
 # Setup work directory for backward-compatibility
-RUN mkdir /home/$NB_USER/work && \
+RUN mkdir /home/$NB_USER/private && \
     fix-permissions /home/$NB_USER
-RUN mkdir /home/$NB_USER/work/local && \
+RUN mkdir /home/$NB_USER/private/local && \
     fix-permissions /home/$NB_USER
 
-RUN /opt/conda/envs/deep_learning_python3/bin/python -m ipykernel install --user --name deep_learning_python3 --display-name 'Deep Learning Python 3'
+RUN python3 -m ipykernel install --user --display-name 'DLM Py3'
 
-RUN conda create -n deep_learning_python2 \
-    'python=2.7' \
-    'notebook' \
-    'jupyterlab' &&\
-    fix-permissions $CONDA_DIR
+#COPY --chown=1000:100 logo-64x64.png /home/Deep_Learner/.local/share/jupyter/kernels/python3/
+#COPY --chown=1000:100 logo-32x32.png /home/Deep_Learner/.local/share/jupyter/kernels/python3/
+
+#COPY --chown=1000:100 logo-32x32.png /opt/conda/share/jupyter/kernels/python3/
+#COPY --chown=1000:100 logo-64x64.png /opt/conda/share/jupyter/kernels/python3/
+
+COPY --chown=1000:100 docker/logo.png /opt/conda/lib/python3.7/site-packages/notebook/static/custom/
+COPY --chown=1000:100 docker/custom.css /opt/conda/lib/python3.7/site-packages/notebook/static/custom/
 
 
-RUN /opt/conda/envs/deep_learning_python2/bin/python -m ipykernel install --user --name deep_learning_python2 --display-name 'Deep Learning Python 2'
-
+RUN   fix-permissions $CONDA_DIR &&\
+      fix-permissions /home/$NB_USER
 
 USER root
+
 
 EXPOSE 8888
 WORKDIR $HOME
@@ -133,7 +148,7 @@ CMD ["start-notebook.sh"]
 COPY start.sh /usr/local/bin/
 COPY start-notebook.sh /usr/local/bin/
 COPY start-singleuser.sh /usr/local/bin/
-#COPY ~/juypterhub/jupyter_notebook_config.py /etc/jupyter/
+#COPY ~/jupyterhub/jupyter_notebook_config.py /etc/jupyter/
 #RUN fix-permissions /etc/jupyter/
 
 # Switch back to Deep_Learner to avoid accidental container runs as root

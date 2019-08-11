@@ -1,0 +1,17 @@
+
+/* header - notebook */
+
+#ipython_notebook {
+    height: 50px !important;
+}
+
+#ipython_notebook img{
+     display:block;
+     background: url(logo.png) no-repeat;
+     background-size: contain;
+     width: 233px;
+     height: 50px;
+     padding-left: 233px;
+     -moz-box-sizing: border-box;
+     box-sizing: border-box;
+ }

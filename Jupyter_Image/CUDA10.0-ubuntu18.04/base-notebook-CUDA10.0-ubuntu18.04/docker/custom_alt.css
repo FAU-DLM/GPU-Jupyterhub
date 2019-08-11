@@ -1,0 +1,180 @@
+body { background-color: #fcfcfc !important; }
+
+body, p, div.rendered_html {
+    color: #336699;
+    font-family: Optima,Segoe,Segoe UI,Candara,Calibri,Arial,sans-serif;
+    font-size: 11pt;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #003366;
+}
+
+#notebook {
+    background-color: #ffffff !important;
+}
+
+/* header - notebook */
+
+#ipython_notebook {
+    height: 50px !important;
+}
+
+#ipython_notebook img{
+     display:block;
+     background: url(logo.png) no-repeat;
+     background-size: contain;
+     width: 233px;
+     height: 50px;
+     padding-left: 233px;
+     -moz-box-sizing: border-box;
+     box-sizing: border-box;
+ }
+
+span#notebook_name {
+    color: #993333;
+    height: 1em;
+    line-height: 1em;
+    padding: 2px;
+    border: medium none;
+    font-size: 90.0%;
+    font-variant: small-caps;
+}
+#menubar-container {
+    font-size: 9pt;
+}
+
+#menubar .navbar-inner {
+    min-height: 12px;
+    border-top: 1px none;
+    border-radius: 0px 0px 2px 2px;
+    border: 2px solid #cccccc;
+}
+
+.navbar-default, .navbar-static-top {
+    background-color: #ffffff !important;
+    color: #999999 !important;
+}
+
+#maintoolbar { padding-top: 0.1em; padding-bottom: 0.1em; }
+
+
+/* Forms and menus */
+
+.dropdown-menu { background-color: #ffffff !important; border: none !important; }
+.dropdown-menu > li > a { color: #003366 !important; }
+.dropdown-menu > li > a:hover { color: #ffffff !important; }
+.dropdown-menu > li.disabled > a { color: #cccccc !important; }
+
+/* Cell styling */
+div.cell {
+    border-radius: 0px 0px 2px 2px;
+    border: 1px solid #fcfcfc !important;
+}
+div.cell.selected {
+    border-radius: 0px 0px 2px 2px;
+    border-color: #f0f000 !important;
+}
+div.cell.edit_mode { border-color: #f00000 !important; }
+div.input_prompt { color: #ff6600 !important; }
+div.output_prompt { color: #ff0066 !important; }
+
+div.input_area {
+    background: #fefefe !important;
+    border: 1px solid #d1d1d1 !important;
+}
+
+.celltoolbar {
+    background: #eee8d5 !important;
+    color: #586e75 !important;
+    border: 1px solid #002b36 !important;
+}
+
+/* CodeMirror Styling */
+
+.cm-s-ipython {
+    font-family: Andale Mono,AndaleMono,monospace;
+    font-size: 12px;
+    line-height: 1.15em;
+    color-profile: sRGB;
+    rendering-intent: auto;
+    background-color: #fbfdff;
+    color: #93a1a1;
+    text-shadow: none;
+    border-radius: 4px;
+}
+
+/* Cursor */
+
+.cm-s-ipython div.CodeMirror-cursor {
+    border: none;
+    width: 0.6em;
+    background-color: rgba(5, 105, 205, 0.1);
+}
+
+/* Gutters */
+
+.cm-s-ipython .CodeMirror-gutters {
+  border-right: 1px solid;
+}
+
+.cm-s-ipython .CodeMirror-gutters {
+  background-color:  #002b36;
+  border-color: #00232c;
+}
+
+.cm-s-ipython .CodeMirror-linenumber {
+  text-shadow: #021014 0 -1px;
+  padding: 0 8px 0 0;
+  color: #586e75;
+}
+
+.cm-s-ipython .CodeMirror-guttermarker-subtle { color: #586e75; }
+.cm-s-ipython .CodeMirror-guttermarker { color: #ddd; }
+
+/* Syntax highlighting */
+
+.cm-s-ipython span.cm-keyword { color: #00994c }
+.cm-s-ipython span.cm-atom { color: #d33682; }
+.cm-s-ipython span.cm-number { color: #0080FF; }
+.cm-s-ipython span.cm-def { color: #268bd2; font-weight: bold; }
+
+.cm-s-ipython span.cm-variable { color: #111111; }
+.cm-s-ipython span.cm-variable-2 { color: #b58900; }
+.cm-s-ipython span.cm-variable-3 { color: #6c71c4; }
+
+.cm-s-ipython span.cm-property { color: #2aa198; }
+.cm-s-ipython span.cm-operator {color: #d33682; }
+
+.cm-s-ipython span.cm-comment { color: #aaaaaa; font-style: italic; }
+
+.cm-s-ipython span.cm-string { color: #cc6600; }
+.cm-s-ipython span.cm-string-2 { color: #aa91dd; }
+
+.cm-s-ipython span.cm-meta { color: #859900; }
+.cm-s-ipython span.cm-qualifier { color: #b58900; }
+.cm-s-ipython span.cm-builtin { color: #859900; }
+.cm-s-ipython span.cm-bracket { color: #cb4b16; }
+.cm-s-ipython .CodeMirror-matchingbracket { color: #b58900 !important; font-weight: bold; }
+.cm-s-ipython .CodeMirror-nonmatchingbracket { color: #dc322f; }
+.cm-s-ipython span.cm-tag { color: #93a1a1 }
+.cm-s-ipython span.cm-attribute {  color: #2aa198; }
+.cm-s-ipython span.cm-header { color: #586e75; }
+.cm-s-ipython span.cm-quote { color: #93a1a1; }
+.cm-s-ipython span.cm-hr {
+  color: transparent;
+  border-top: 1px solid #586e75;
+  display: block;
+}
+.cm-s-ipython span.cm-link { color: #93a1a1; cursor: pointer; }
+.cm-s-ipython span.cm-special { color: #6c71c4; }
+.cm-s-ipython span.cm-em {
+  color: #999;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+.cm-s-ipython span.cm-strong { color: #eee; }
+
+.cm-s-ipython span.cm-tab:before {
+  content: "âž¤";
+  color: #58

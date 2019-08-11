@@ -2,101 +2,151 @@
 # Distributed under the terms of the Modified BSD License.
 
 # JupyterHub docker-compose configuration file
-version:                          "2"
+version: "3"
 
 services:
   hub:
+    shm_size: 16G
+    ipc: host
     depends_on:
       - hub-db
     build:
-      context:                    .
-      dockerfile:                 Dockerfile.jupyterhub
+      context: .
+      dockerfile: Dockerfile.jupyterhub
       args:
-        JUPYTERHUB_VERSION:       ${JUPYTERHUB_VERSION}
-    restart:                      always
-    image:                        jupyterhub
-    container_name:               jupyterhub
-    # not needed if nvidia-docker 2 is installed
-    #devices:                     #this is required
+        JUPYTERHUB_VERSION: $JUPYTERHUB_VERSION
+    restart: always
+    image: jupyterhub
+    #runtime: nvidia
+    container_name: jupyterhub
+    # preparation for docker-swarm mode
+    deploy: ### this is just for preparation to swarm mode... not finished yet
+      placement:
+        constraints:
+          - node.labels.manager == 1
+      replicas: 1
+    # not needed if nvidia-docker2 is installed
+    #devices:  #this is required for nvidia-docker1
     #  - /dev/nvidiactl
     #  - /dev/nvidia-uvm
     #  - /dev/nvidia0 #in general: /dev/nvidia# where # depends on which gpu card is wanted to be used
     volumes:
-      # use a volume mapping into the container if you like
-      - "/notebook_dir:${DOCKER_NOTEBOOK_DIR}"
       # Bind Docker socket on the host so we can connect to the daemon from
       # within the container
       - "/var/run/docker.sock:/var/run/docker.sock:rw"
       # Bind Docker volume on host for JupyterHub database and cookie secrets
       - "data:${DATA_VOLUME_CONTAINER}"
-      # not needed if nvidia-docker 2 is installed
-      #- "nvidia_driver_387.34:/usr/local/nvidia:ro"
+      #- "nvidia_driver_387.34:/usr/local/nvidia:ro" #this is required for nvidia-docker1
+      - "${HOST_PERSONAL_NETWORK_FOLDER}:${HOST_PERSONAL_NETWORK_FOLDER}" ### needed for pre spawn hook
+      - "${HOST_SHARED_NETWORK_FOLDER}:${HOST_SHARED_NETWORK_FOLDER}" ### not really needed
+
     ports:
-      - "443:443"
+     # - "443:443"
+      - "8000:8000"
+
     links:
       - hub-db
     environment:
-      # this is just to show how to use with self signed keys use which ever you like
-      #SSL_KEY:                   "./ssl/privkey.pem"
-      #SSL_CERT:                  "./ssl/cert.pem"
+      #SSL_KEY: "./secrets/privkey.pem" ### they are added at build time in the Dockerfile
+      #SSL_CERT: "./secrets/cert.pem"
       # All containers will join this network
-      DOCKER_NETWORK_NAME:        ${DOCKER_NETWORK_NAME}
+      DOCKER_NETWORK_NAME: ${DOCKER_NETWORK_NAME}
       # JupyterHub will spawn this Notebook image for users
-      DOCKER_NOTEBOOK_IMAGE:      ${LOCAL_NOTEBOOK_IMAGE}
+      DOCKER_NOTEBOOK_IMAGE: ${DOCKER_NOTEBOOK_IMAGE}
       # Notebook directory inside user image
-      DOCKER_NOTEBOOK_DIR:        ${DOCKER_NOTEBOOK_DIR}
+      DOCKER_NOTEBOOK_DIR: ${DOCKER_NOTEBOOK_DIR}
       # Using this run command (optional)
-      DOCKER_SPAWN_CMD:           ${DOCKER_SPAWN_CMD}
-      CONFIGPROXY_AUTH_TOKEN:     ${CONFIGPROXY_AUTH_TOKEN}
-      ## needed for nvidia-docker version 2
-      NVIDIA_VISIBLE_DEVICES:     all
+      DOCKER_SPAWN_CMD: ${DOCKER_SPAWN_CMD}
+      #CONFIGPROXY_AUTH_TOKEN: ${CONFIGPROXY_AUTH_TOKEN}
+      NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: compute,utility
       # Postgres db info
-      POSTGRES_DB:                ${POSTGRES_DB}
-      POSTGRES_HOST:              hub-db
-      POSTGRES_PASSWORD:          ${POSTGRES_PASSWORD}
-    command:                      >
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: hub-db
+      #Network paths
+      DOCKER_PERSONAL_NETWORK_FOLDER: ${DOCKER_PERSONAL_NETWORK_FOLDER}
+      DOCKER_SHARED_NETWORK_FOLDER: ${DOCKER_SHARED_NETWORK_FOLDER}
+      HOST_PERSONAL_NETWORK_FOLDER: ${HOST_PERSONAL_NETWORK_FOLDER}
+      HOST_SHARED_NETWORK_FOLDER: ${HOST_SHARED_NETWORK_FOLDER}
+      #TEST: '/media/share/Jupyterhubstorage/test'
+      #POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      #GitHubOAuthenticator
+      #GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      #GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      #OAUTH_CALLBACK_URL: ${OAUTH_CALLBACK_URL}
+    env_file: ### env files containing variables you do not want to track in GitHub
+      - secrets/postgres.env
+      - secrets/oauth.env
+      - secrets/cookie.env
+
+    command: >
       jupyterhub -f /srv/jupyterhub/jupyterhub_config.py
-      
-  # postgres database
+
   hub-db:
-    image:                        postgres:9.5
-    container_name:               jupyterhub-db
-    restart:                      always
+    image: postgres:9.5
+    container_name: jupyterhub-db
+    restart: always
     environment:
-      POSTGRES_DB:                ${POSTGRES_DB}
-      PGDATA:                     ${DB_VOLUME_CONTAINER}
-      POSTGRES_PASSWORD:          ${POSTGRES_PASSWORD}
-    # I have the postgres related settings stored in the .env file but you could store them here or in a docker volume using dockersecrets
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: ${DB_VOLUME_CONTAINER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     #env_file:
       #- secrets/postgres.env
     volumes:
       - "db:${DB_VOLUME_CONTAINER}"
 
-  #PHP-Adminer
-  adminer:
-    links:
-      - hub-db
-    image:                        clue/adminer:latest
-    ports:
-      - 7000:80
+  ftp:
+      image: stilliard/pure-ftpd:hardened-latest
+      # deploy:
+      #   placement:
+      #     constraints: [node.role == manager]
 
+      expose:
+        - "30000-30009"
+      ports:
+        - "21:21"
+        - "30000-30009:30000-30009"
+      #environment:
+      #  - "PUBLICHOST=localhost"
+      logging:
+        driver: "json-file"
+     # networks:
+       # - ftp
+      volumes:
+        - "${HOST_SHARED_NETWORK_FOLDER}/uploads/:/home/ftpusers/uploads/"
+      environment:
+        FTP_USER_NAME: deep_learner ### whatever username
+        FTP_USER_PASS: should be here--> #${DOCKER_FTP_PASSWD} ###but this is not working so type it in plain
+        FTP_USER_HOME: '/home/ftpusers/'
+        FTP_USER_UID: '1000'
+        FTP_USER_GID: '1000'
+        FTP_PASSIVE_PORTS: '30000:30009'
+      env_file:
+        - secrets/ftpsecrets.env ### somehow not picked up
+
+
+  #PHP-Adminer
+  # adminer:
+  #   links:
+  #     - hub-db
+  #   image: clue/adminer:latest
+  #   ports:
+  #     - 7000:80
+  #   #networks:
+      #- ${DOCKER_NETWORK_NAME}  I turned it off
 
 networks:
   default:
     external:
-      name:                       ${DOCKER_NETWORK_NAME}
-
+      name: ${DOCKER_NETWORK_NAME}
 
 volumes:
   data:
     external:
-      name:                       ${DATA_VOLUME_HOST} ## need to be created first
-
-  db:
-    external:
-      name:                       ${DB_VOLUME_HOST} ## need to be created first
-
+      name: ${DATA_VOLUME_HOST}
   # not needed if nvidia-docker 2 is installed
   #nvidia_driver_387.34:
-  #  external:                    true
+  #  external: true
+  db:
+    external:
+      name: ${DB_VOLUME_HOST}

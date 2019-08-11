@@ -1,24 +1,27 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-FROM digitalanatomist/base-notebook-CUDA10-ubuntu18.04:latest
-
+FROM digitalanatomist/base-notebook-cuda10-ubuntu18.04:latest
 
 MAINTAINER Samir Jabari <samir.jabari@fau.de>
 #MAINTAINER aburnap@mit.edu
 #MAINTAINER Jupyter Project <jupyter@googlegroups.com>
 
 # For CUDA profiling, TensorFlow requires CUPTI.
-ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:$LD_LIBRARY_PATH
-ENV CUDA_HOME=/usr/local/cuda
-ENV CUDA_ROOT=$CUDA_HOME
-ENV PATH=$PATH:$CUDA_ROOT/bin:$HOME/bin
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_ROOT/lib64
+#ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:$LD_LIBRARY_PATH
+#ENV CUDA_HOME=/usr/local/cuda
+#ENV CUDA_ROOT=$CUDA_HOME
+#ENV PATH=$PATH:$CUDA_ROOT/bin:$HOME/bin
+#ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_ROOT/lib64
+
+# For CUDA profiling, TensorFlow requires CUPTI.
+ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+
 
 USER root
 RUN apt-get update
 
-RUN ln -sf /usr/bin/python3.6 /usr/local/bin/python3 &&\
+RUN ln -sf /usr/bin/python3.7 /usr/local/bin/python3 &&\
     ln -sf /usr/local/bin/pip /usr/local/bin/pip3
 
 # Install all OS dependencies for fully functional notebook server
@@ -123,7 +126,7 @@ RUN apt-get update && apt-get install -y python3-openslide &&\
 RUN apt update && apt install -y libvips libvips-dev libvips-tools libopenslide-dev
 
 
-RUN /opt/conda/envs/deep_learning_python3/bin/python -m pip install  \
+RUN python3 -m pip install  \
     scikit-image \
     pandas \
     tqdm \
@@ -166,122 +169,53 @@ RUN /opt/conda/envs/deep_learning_python3/bin/python -m pip install  \
     scikit-learn \
     zmq \
     openslide-python \
-    jupyter-tensorboard &&\
+    jupyter-tensorboard \
+    jupyter_contrib_nbextensions \
+    torchsummary \
+    dataclasses \
+    fastprogress \
+    opencv-python \
+    ipywidgets \
+    nvidia-ml-py3 \
+    scikit-multilearn \
+    keras-lr-finder \
+    keras-lr-multiplier \
+    feature-selector \
+    mlens \
+    xgboost \
+    vecstack \
+    &&\
     fix-permissions $CONDA_DIR &&\
     fix-permissions /home/$NB_USER
 
-RUN /opt/conda/envs/deep_learning_python2/bin/python -m pip install  \
-    scikit-image \
-    pandas \
-    tqdm \
-    imgaug \
-    kaggle \
-    pydicom \
-    tensorboardX \
-    tensorflow-tensorboard \
-    sklearn \
-    plotly \
-    pretrainedmodels \
-    seaborn \
-    keras \
-    skorch \
-    ignite  \
-    graphviz \
-    sklearn_pandas \
-    isoweek \
-    pandas_summary \
-    spacy\
-    pypng \
-    torchtext \
-    Pillow \
-    h5py \
-    ipykernel \
-    jupyter \
-    matplotlib \
-    numpy \
-    scipy \
-    bcolz \
-    Cython \
-    path.py \
-    six \
-    sphinx \
-    wheel \
-    pygments \
-    Flask \
-    statsmodels \
-    ipython \
-    scikit-learn \
-    zmq \
-    openslide-python \
-    jupyter-tensorboard &&\
-    fix-permissions $CONDA_DIR &&\
-    fix-permissions /home/$NB_USER
-
-# Installing OpenCV TensorFlow Kerasand Pytorch into the environments
-RUN conda install -n deep_learning_python2 -y  \
-    opencv \
-    tensorboard \
-    tensorflow-gpu=1.12.0 \
-    keras \
-    pytorch torchvision  cuda100 -c pytorch &&\
-    fix-permissions $CONDA_DIR &&\
-    fix-permissions /home/$NB_USER
-
-RUN conda install -n deep_learning_python3   \
-      opencv \
+RUN conda install -c defaults -c anaconda -c conda-forge -c pytorch -c fastai -y   \
       tensorboard \
-      tensorflow-gpu=1.12.0 \
+      tensorflow-gpu=1.14.0 \
       keras \
-      pytorch torchvision  cuda100 -c pytorch &&\
+      fastai \
+      libjpeg-turbo &&\
       fix-permissions $CONDA_DIR &&\
       fix-permissions /home/$NB_USER
 
-RUN conda install --yes \
-    'tensorflow-gpu==1.11.0' &&\
-    fix-permissions $CONDA_DIR &&\
-    fix-permissions /home/$NB_USER
+RUN python3 -m pip uninstall -y pillow pil jpeg libtiff libjpeg-turbo
+RUN conda uninstall -y --force pillow pil jpeg libtiff libjpeg-turbo
+RUN conda install -c conda-forge libjpeg-turbo
+RUN CC="cc -mavx2" python3 -m pip install --no-cache-dir -U --force-reinstall pillow-simd
+#RUN CFLAGS="${CFLAGS} -mavx2"  /opt/conda/bin/python -m pip install --upgrade --no-cache-dir --force-reinstall --no-binary :all: --compile pillow-simd
+RUN conda install  -c zegami  -y   \
+            libtiff-libjpeg-turbo &&\
+            fix-permissions $CONDA_DIR &&\
+            fix-permissions /home/$NB_USER
 
-# Import matplotlib the first time to build the font cache.
-#ENV XDG_CACHE_HOME /home/$NB_USER/.cache/
-#RUN MPLBACKEND=Agg python -c "import matplotlib.pyplot" && \
-    #fix-permissions /home/$NB_USER
-
-# Install facets which does not have a pip or conda package at the moment
-#RUN cd /tmp && \
-#    git clone https://github.com/PAIR-code/facets.git && \
-#    cd facets && \
-#    /opt/conda/envs/deep_learning_python2/bin/ jupyter nbextension install facets-dist/ --sys-prefix && \
-#    /opt/conda/envs/deep_learning_python3/bin/ jupyter nbextension install facets-dist/ --sys-prefix && \
-#    rm -rf facets && \
-#    fix-permissions $CONDA_DIR &&\
-#    fix-permissions /home/$NB_USER
-
-RUN python3.6 -m pip install --upgrade --force-reinstall --no-cache-dir --ignore-installed  --pre \
-   jupyter-tensorboard &&\
-   fix-permissions $CONDA_DIR &&\
-   fix-permissions /home/$NB_USER
-
+RUN conda install -y \
+            jpeg \
+            libtiff &&\
+            fix-permissions $CONDA_DIR &&\
+            fix-permissions /home/$NB_USER
 
 EXPOSE 5000 6006
 
-USER root
-
-# Autodetects jupyterhub and standalone modes
-#COPY jupyter_notebook_config.py /root/.jupyter/
-#COPY run_jupyter.sh /usr/local/bin/
-
-#RUN chmod +x /usr/local/bin/run_jupyter.sh
-
-#CMD ["/usr/local/bin/run_jupyter.sh", "--allow-root"]
-
-
 USER $NB_USER
-CMD ["start-notebook.sh"]
-
-#COPY start-notebook.sh /usr/local/bin/
-
-
-#USER $NB_USER
 
 # cleanup
  #RUN 	apt-get autoremove -y && \

@@ -1,6 +1,0 @@
-name: python2
-channels:
-- bioconda
-dependencies:
-# bioconda
-- python-omero=5.4.9=py27_0

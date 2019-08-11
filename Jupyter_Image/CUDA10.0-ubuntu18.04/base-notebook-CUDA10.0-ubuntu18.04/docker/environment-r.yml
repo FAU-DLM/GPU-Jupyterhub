@@ -1,0 +1,22 @@
+channels:
+- bioconda
+- conda-forge
+- defaults
+dependencies:
+- bioconductor-ebimage
+- maven
+- r-assertthat
+# https://github.com/ContinuumIO/anaconda-issues/issues/4656
+- r-base
+- r-devtools
+- r-git2r
+- r-httr
+- r-irdisplay
+- r-jpeg
+- r-repr
+- r-rjava
+- r-testthat
+- r-tidyverse
+- r-xml2
+- r-getpass
+prefix: /opt/conda/envs/r-kernel
