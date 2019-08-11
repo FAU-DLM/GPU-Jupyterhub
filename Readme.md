@@ -1,6 +1,6 @@
 This repo contains the docker-compose.yml for defining the dependencies to run the Jupyter Notebook Images described in the Dockerfiles under Jupyter_Images.
-There are two sets of images. CUDA10 and Ubuntu18.04 based ones.
-They will be spwaned from a Jupyterhub which is defined in the Dockerfile.jupyterhub under the folder Jupyterhub_image.
+There is one Jupyter Notebook image, CUDA10.0 and Ubuntu18.04 based.
+It will be spwaned from a Jupyterhub which is defined in the Dockerfile.jupyterhub under the folder Jupyterhub_Image.
 For more details visit our website https://www.dlm.med.fau.de/setting-jupyterhub-deep-learning/
 
 Edited the repo:
