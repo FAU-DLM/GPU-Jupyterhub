@@ -9,7 +9,7 @@ Edited the repo:
 --> you will need a folder called secets containing the env_files mentioned in the yml-env_file
 --> will need a folder under Jupyterhub_Image called ssl containing your ssl certs for building and running the Jupyterhub.
 
-The Jupyter_Image (jupyternotebook) has new features an some removed features:
+The Jupyter_Image (jupyternotebook) has new features and some removed features:
 Python2 is gone
 R is available
 Python3 is available
@@ -28,7 +28,7 @@ It contains Tensorflow-GPU 1.14, Keras 2.2.4 Pytorch 1.0 and Fastai 1
     - Data is persisted:
      --> user based:
          -locally on nvme/ssd (Docker-Volume bind mount--> host_path:/home/Deep_Learner/private/local) and per network associated folder       
-          (host_path:/home/Deep_Learner/work/network).
+          (host_path:/home/Deep_Learner/private/network).
       --> commonly shared:
          - per network associated folder (net_share:/home/Deep_Learner/shared).
 
