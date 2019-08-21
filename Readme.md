@@ -16,7 +16,7 @@ Python3 is available
 SOS is available
 
 The workhorse for deep-learning is Python3 based.
-It contains Tensorflow-GPU 1.14, Keras 2.2.4 Pytorch 1.0 and Fastai 1
+It contains Tensorflow-GPU 1.14, Keras 2.2.4 Pytorch 1.2.0 and Fastai 1.0.57
 
 -Jupyterhub Image definition with DockerSpawner for spawning Jupyternotebooks.
     Localauthentication is removed and replaced by OAuth with Github
