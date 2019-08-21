@@ -212,6 +212,10 @@ RUN conda install -y \
             libtiff &&\
             fix-permissions $CONDA_DIR &&\
             fix-permissions /home/$NB_USER
+            
+RUN conda install pytorch torchvision cudatoolkit=10.0 -c pytorch &&\
+    fix-permissions $CONDA_DIR &&\
+    fix-permissions /home/$NB_USER            
 
 EXPOSE 5000 6006
 
